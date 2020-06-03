@@ -1,7 +1,10 @@
 package parasut
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -10,11 +13,12 @@ import (
 )
 
 type SalesInvoice struct {
-	client          *Client
-	ID              string    `jsonapi:"primary,sales_invoices"`
-	NetTotal        string    `jsonapi:"attr,net_total"`
-	Contact         *Contact  `jsonapi:"relation,contact"`
-	ActiveEDocument *EInvoice `jsonapi:"relation,active_e_document"`
+	client         *Client
+	ID             string   `jsonapi:"primary,sales_invoices"`
+	NetTotal       string   `jsonapi:"attr,net_total"`
+	Contact        *Contact `jsonapi:"relation,contact"`
+	ActiveEInvoice *EInvoice
+	ActiveEArchive *EArchive
 }
 
 func (c *Client) SalesInvoice() *SalesInvoice {
@@ -43,13 +47,45 @@ func (sales_invoice *SalesInvoice) Find(id string, include ...string) (*SalesInv
 		return nil, errors.New("unauthorized")
 	}
 
-	result := new(SalesInvoice)
+	// copy body
+	body := r.Response().Body
+	bodyBytes, _ := ioutil.ReadAll(body)
+	body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
-	err = jsonapi.UnmarshalPayload(r.Response().Body, result)
+	result := new(SalesInvoice)
+	err = jsonapi.UnmarshalPayload(body, result)
 
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
+	}
+
+	// assign active e-invoice/archive
+	if strings.Contains(params["include"].(string), "active_e_document") {
+		// parse as regular json with jsonapi structs
+		var raw jsonapi.OnePayload
+		json.Unmarshal(bodyBytes, &raw)
+
+		// get type and id of active e-document
+		activeEDocumentType := raw.Data.Relationships["active_e_document"].(map[string]interface{})["data"].(map[string]interface{})["type"]
+		activeEDocumentID := raw.Data.Relationships["active_e_document"].(map[string]interface{})["data"].(map[string]interface{})["id"]
+
+		// loop for included entities, find active e-document
+		for _, val := range raw.Included {
+			if val.ID == activeEDocumentID && val.Type == activeEDocumentType {
+				bytearr, _ := json.Marshal(jsonapi.OnePayload{Data: val})
+				body = ioutil.NopCloser(bytes.NewBuffer(bytearr))
+				switch activeEDocumentType {
+				case "e_invoices":
+					result.ActiveEInvoice = new(EInvoice)
+					jsonapi.UnmarshalPayload(body, result.ActiveEInvoice)
+				case "e_archives":
+					result.ActiveEArchive = new(EArchive)
+					jsonapi.UnmarshalPayload(body, result.ActiveEArchive)
+				}
+				break
+			}
+		}
 	}
 
 	return result, nil

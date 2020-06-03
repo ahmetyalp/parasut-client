@@ -30,11 +30,12 @@ func main() {
 
 	// fmt.Printf("%+v\n", eInvoice)
 
-	salesInvoice, _ := client.SalesInvoice().Find("2495610", "contact", "active_e_document")
+	salesInvoice, _ := client.SalesInvoice().Find("2495627", "active_e_document")
 
-	fmt.Printf("%+v\n", salesInvoice)
-	fmt.Printf("%+v\n", *salesInvoice.Contact)
-	fmt.Printf("%+v\n", salesInvoice.ActiveEDocument)
+	// fmt.Printf("%+v\n", salesInvoice)
+	// fmt.Printf("%+v\n", *salesInvoice.Contact)
+	fmt.Printf("%+v\n", salesInvoice.ActiveEInvoice)
+	fmt.Printf("%+v\n", salesInvoice.ActiveEArchive)
 
 	// contact, _ := client.Contact().Find("1982805")
 
