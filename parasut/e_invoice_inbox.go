@@ -10,9 +10,14 @@ import (
 )
 
 type EInvoiceInbox struct {
-	client *Client
-	ID     int    `jsonapi:"primary,e_invoice_inboxes"`
-	Vkn    string `jsonapi:"attr,vkn"`
+	client              *Client
+	ID                  string `jsonapi:"primary,e_invoice_inboxes"`
+	Vkn                 string `jsonapi:"attr,vkn"`
+	EInvoiceAddress     string `jsonapi:"attr, e_invoice_address"`
+	Name                string `jsonapi:"attr,name"`
+	InboxType           string `jsonapi:"attr,inbox_type"`
+	AddressRegisteredAt string `jsonapi:"attr,address_registered_at"`
+	RegisteredAt        string `jsonapi:"attr,registered_at"`
 }
 
 func (c *Client) EInvoiceInbox() *EInvoiceInbox {
@@ -29,9 +34,8 @@ func (e_invoice_inbox *EInvoiceInbox) All(vkn string) ([]*EInvoiceInbox, error) 
 	header := req.Header{
 		"Authorization": "Bearer " + e_invoice_inbox.client.AccessToken,
 	}
-	var r *req.Resp
-	var err error
-	r, err = req.Get(BASE_URL+"v4/"+e_invoice_inbox.client.CompanyID+"/e_invoice_inboxes", params, header)
+
+	r, err := req.Get(BASE_URL+"v4/"+e_invoice_inbox.client.CompanyID+"/e_invoice_inboxes", params, header)
 
 	if err != nil {
 		log.Fatal(err)

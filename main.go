@@ -2,20 +2,14 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"parasut-client/parasut"
-	"time"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-		return
-	}
+	godotenv.Load()
 
 	client := parasut.Client{
 		ClientID:     os.Getenv("CLIENT_ID"),
@@ -28,14 +22,21 @@ func main() {
 
 	client.Connect()
 
-	inboxes, error := client.EInvoiceInbox().All("7171717171")
+	// inboxes, _ := client.EInvoiceInbox().All("7171717171")
 
-	if error != nil {
-		log.Fatal(error)
-		return
-	}
+	// fmt.Printf("%+v\n", inboxes[0])
 
-	fmt.Println(inboxes[0].Vkn)
+	// eInvoice, _ := client.EInvoice().Find("53456")
 
-	time.Sleep(500 * time.Second)
+	// fmt.Printf("%+v\n", eInvoice)
+
+	salesInvoice, _ := client.SalesInvoice().Find("2495610", "contact", "active_e_document")
+
+	fmt.Printf("%+v\n", salesInvoice)
+	fmt.Printf("%+v\n", *salesInvoice.Contact)
+	fmt.Printf("%+v\n", salesInvoice.ActiveEDocument)
+
+	// contact, _ := client.Contact().Find("1982805")
+
+	// fmt.Printf("%+v\n", contact)
 }
