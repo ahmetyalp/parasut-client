@@ -3,7 +3,6 @@ package parasut
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -39,12 +38,15 @@ func (sales_invoice *SalesInvoice) Find(id string, include ...string) (*SalesInv
 	r, err := req.Get(BASE_URL+"v4/"+sales_invoice.client.CompanyID+"/sales_invoices/"+id, header, params)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
-	if statusCode := r.Response().StatusCode; statusCode == 401 || statusCode == 403 {
-		return nil, errors.New("unauthorized")
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
 	// copy body
@@ -56,7 +58,7 @@ func (sales_invoice *SalesInvoice) Find(id string, include ...string) (*SalesInv
 	err = jsonapi.UnmarshalPayload(body, result)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 

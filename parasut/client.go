@@ -1,7 +1,10 @@
 package parasut
 
 import (
+	"errors"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/imroc/req"
@@ -20,7 +23,7 @@ type Client struct {
 	AutoRefresh  bool
 }
 
-func (c *Client) Connect() {
+func (c *Client) Connect() error {
 	// req.Debug = true
 	params := req.QueryParam{
 		"client_id":     c.ClientID,
@@ -34,8 +37,17 @@ func (c *Client) Connect() {
 	r, err := req.Post(BASE_URL+"/oauth/token", params)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
+
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
 	res := make(map[string]string)
 	r.ToJSON(&res)
 
@@ -46,6 +58,8 @@ func (c *Client) Connect() {
 		timer := time.NewTicker(60 * 60 * time.Second)
 		go refresher(c, timer)
 	}
+
+	return nil
 }
 
 func (c *Client) refresh() {
@@ -59,8 +73,16 @@ func (c *Client) refresh() {
 	r, err := req.Post(BASE_URL+"/oauth/token", params)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
+
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	res := make(map[string]string)
 	r.ToJSON(&res)
 
@@ -72,5 +94,21 @@ func refresher(c *Client, timer *time.Ticker) {
 	for {
 		<-timer.C
 		c.refresh()
+	}
+}
+
+func HandleHTTPStatus(response *http.Response) error {
+	switch statusCode := response.StatusCode; statusCode {
+	case 200, 201, 202:
+		return nil
+	case 401, 403:
+		return errors.New("unauthorized")
+	case 400, 422:
+		body, _ := ioutil.ReadAll(response.Body)
+		return errors.New(string(body))
+	case 404:
+		return errors.New("not found")
+	default:
+		return errors.New("unknown")
 	}
 }

@@ -1,7 +1,6 @@
 package parasut
 
 import (
-	"errors"
 	"log"
 
 	"github.com/google/jsonapi"
@@ -28,12 +27,15 @@ func (contact *Contact) Find(id string) (*Contact, error) {
 	r, err := req.Get(BASE_URL+"v4/"+contact.client.CompanyID+"/contacts/"+id, header)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
-	if statusCode := r.Response().StatusCode; statusCode == 401 || statusCode == 403 {
-		return nil, errors.New("unauthorized")
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
 	result := new(Contact)
@@ -41,7 +43,7 @@ func (contact *Contact) Find(id string) (*Contact, error) {
 	err = jsonapi.UnmarshalPayload(r.Response().Body, result)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 	return result, nil

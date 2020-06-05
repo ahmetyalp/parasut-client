@@ -1,7 +1,6 @@
 package parasut
 
 import (
-	"errors"
 	"log"
 	"strings"
 
@@ -37,12 +36,15 @@ func (e_invoice *EInvoice) Find(id string, include ...string) (*EInvoice, error)
 	r, err := req.Get(BASE_URL+"v4/"+e_invoice.client.CompanyID+"/e_invoices/"+id, header, params)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
-	if statusCode := r.Response().StatusCode; statusCode == 401 || statusCode == 403 {
-		return nil, errors.New("unauthorized")
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
 	result := new(EInvoice)
@@ -50,12 +52,8 @@ func (e_invoice *EInvoice) Find(id string, include ...string) (*EInvoice, error)
 	err = jsonapi.UnmarshalPayload(r.Response().Body, result)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 	return result, nil
-}
-
-func (e_invoice *EInvoice) iamdocument() {
-
 }

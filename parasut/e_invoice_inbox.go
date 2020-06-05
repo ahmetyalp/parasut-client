@@ -1,7 +1,6 @@
 package parasut
 
 import (
-	"errors"
 	"log"
 	"reflect"
 
@@ -38,18 +37,22 @@ func (e_invoice_inbox *EInvoiceInbox) All(vkn string) ([]*EInvoiceInbox, error) 
 	r, err := req.Get(BASE_URL+"v4/"+e_invoice_inbox.client.CompanyID+"/e_invoice_inboxes", params, header)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
-	if statusCode := r.Response().StatusCode; statusCode == 401 || statusCode == 403 {
-		return nil, errors.New("unauthorized")
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
+
 	var data []interface{}
 	data, err = jsonapi.UnmarshalManyPayload(r.Response().Body, reflect.TypeOf(e_invoice_inbox))
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
