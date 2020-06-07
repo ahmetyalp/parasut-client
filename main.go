@@ -37,14 +37,41 @@ func main() {
 
 	// fmt.Printf("%#v\n", eInvoice)
 
-	salesInvoice, _ := client.SalesInvoice().Find("513907", "active_e_document", "details", "contact")
+	// salesInvoice, _ := client.SalesInvoice().Find("513907", "active_e_document", "details", "contact")
 
-	fmt.Printf("%#v\n", salesInvoice)
-	fmt.Printf("%#v\n", salesInvoice.Contact)
-	fmt.Printf("%#v\n", salesInvoice.ActiveEInvoice)
-	fmt.Printf("%#v\n", salesInvoice.ActiveEArchive)
-	fmt.Printf("%#v\n", len(salesInvoice.SalesInvoiceDetails))
-	fmt.Printf("%#v\n", salesInvoice.SalesInvoiceDetails[0])
+	// fmt.Printf("%#v\n", salesInvoice)
+	// fmt.Printf("%#v\n", salesInvoice.Contact)
+	// fmt.Printf("%#v\n", salesInvoice.ActiveEInvoice)
+	// fmt.Printf("%#v\n", salesInvoice.ActiveEArchive)
+	// fmt.Printf("%#v\n", len(salesInvoice.SalesInvoiceDetails))
+	// fmt.Printf("%#v\n", salesInvoice.SalesInvoiceDetails[0])
+
+	contact := parasut.Contact{
+		ID: "401080",
+	}
+
+	product := parasut.Product{
+		ID: "548459",
+	}
+
+	details := parasut.SalesInvoiceDetails{
+		Product:  &product,
+		Quantity: "6",
+	}
+	sales_invoice := parasut.SalesInvoice{
+		IssueDate:           "2020-01-01",
+		DueDate:             "2020-01-01",
+		Contact:             &contact,
+		WithholdingRate:     "0",
+		ItemType:            "invoice",
+		Currency:            "TRL",
+		ExchangeRate:        "1.0",
+		InvoiceDiscountType: "amount",
+		InvoiceDiscount:     "0",
+		SalesInvoiceDetails: []*parasut.SalesInvoiceDetails{&details},
+	}
+
+	client.SalesInvoice().New(&sales_invoice)
 
 	// contact, _ := client.Contact().Find("1982805")
 
