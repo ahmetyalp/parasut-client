@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/imroc/req"
@@ -95,6 +96,10 @@ func refresher(c *Client, timer *time.Ticker) {
 		<-timer.C
 		c.refresh()
 	}
+}
+
+func (c *Client) UrlBuilder(params ...string) string {
+	return BASE_URL + "v4/" + c.CompanyID + "/" + strings.Join(params, "/")
 }
 
 func HandleHTTPStatus(response *http.Response) error {

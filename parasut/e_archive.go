@@ -28,14 +28,37 @@ type EArchiveParams struct {
 	VatWithholdingCode     string            `jsonapi:"attr,vat_withholding_code,omitempty"`
 	VatExemptionReasonCode string            `jsonapi:"attr,vat_exemption_reason_code,omitempty"`
 	VatExemptionReason     string            `jsonapi:"attr,vat_exemption_reason,omitempty"`
-	Note                   string            `jsonapi:"attr,note"`
+	Note                   string            `jsonapi:"attr,note,omitempty"`
 	ExciseDutyCodes        []ExciseDutyCodes `jsonapi:"attr,excise_duty_codes,omitempty"`
+	InternetSale           InternetSale      `jsonapi:"attr,internet_sale,omitempty"`
+	Shipment               Shipment          `jsonapi:"attr,shipment,omitempty"`
 	SalesInvoice           *SalesInvoice     `jsonapi:"relation,sales_invoice"`
 }
 
 type ExciseDutyCodes struct {
 	Product             int64  `json:"product,omitempty"`
 	SalesExciseDutyCode string `json:"sales_excise_duty_code,omitempty"`
+}
+
+type InternetSale struct {
+	Url             string `json:"url,omitempty"`
+	PaymentType     string `json:"payment_type,omitempty"`
+	PaymentPlatform string `json:"payment_platform,omitempty"`
+	PaymentDate     string `json:"payment_date,omitempty"`
+}
+
+type Shipment struct {
+	Title  string `json:"title,omitempty"`
+	Vkn    string `json:"vkn,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Tcknow string `json:"tckn,omitempty"`
+	Date   string `json:"date,omitempty"`
+}
+
+type EDocumentPdfResponse struct {
+	ID        string `jsonapi:"primary,e_document_pdfs"`
+	Url       string `jsonapi:"attr,url"`
+	ExpiresAt string `jsonapi:"attr,expires_at"`
 }
 
 func (c *Client) EArchive() *EArchive {
@@ -53,7 +76,7 @@ func (e_archive *EArchive) Find(id string, include ...string) (*EArchive, error)
 		"Authorization": "Bearer " + e_archive.client.AccessToken,
 	}
 
-	r, err := req.Get(BASE_URL+"v4/"+e_archive.client.CompanyID+"/e_archives/"+id, header, params)
+	r, err := req.Get(e_archive.urlBuilder(id), header, params)
 
 	if err != nil {
 		log.Println(err)
@@ -86,7 +109,7 @@ func (e_archive *EArchive) New(params *EArchiveParams) (*TrackableJob, error) {
 	body, _ := jsonapi.Marshal(params)
 	body.(*jsonapi.OnePayload).Included = nil
 
-	r, err := req.Post(BASE_URL+"v4/"+e_archive.client.CompanyID+"/e_archives", header, req.BodyJSON(body))
+	r, err := req.Post(e_archive.urlBuilder(), header, req.BodyJSON(body))
 
 	if err != nil {
 		log.Println(err)
@@ -109,4 +132,37 @@ func (e_archive *EArchive) New(params *EArchiveParams) (*TrackableJob, error) {
 	}
 	result.client = e_archive.client
 	return result, nil
+}
+
+func (e_archive *EArchive) Pdf(id string) (*EDocumentPdfResponse, error) {
+	header := req.Header{
+		"Authorization": "Bearer " + e_archive.client.AccessToken,
+	}
+
+	r, err := req.Get(e_archive.urlBuilder(id, "pdf"), header)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	result := new(EDocumentPdfResponse)
+
+	err = jsonapi.UnmarshalPayload(r.Response().Body, result)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return result, nil
+}
+
+func (e_archive *EArchive) urlBuilder(params ...string) string {
+	return e_archive.client.UrlBuilder(append([]string{"e_archives"}, params...)...)
 }
