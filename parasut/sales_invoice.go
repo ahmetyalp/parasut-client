@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/google/jsonapi"
@@ -13,56 +15,142 @@ import (
 
 type SalesInvoice struct {
 	client                 *Client
-	ID                     string   `jsonapi:"primary,sales_invoices"`
-	Archived               bool     `jsonapi:"attr,archived"`
-	NetTotal               string   `jsonapi:"attr,net_total"`
-	GrossTotal             string   `jsonapi:"attr,gross_total"`
-	Withholding            string   `jsonapi:"attr,withholding"`
-	TotalExciseDuty        string   `jsonapi:"attr,total_excise_duty"`
-	TotalCommunicationsTax string   `jsonapi:"attr, total_communications_tax "`
-	TotalVat               string   `jsonapi:"attr,total_vat"`
-	VatWitholding          string   `jsonapi:"attr,vat_witholding"`
-	TotalDiscount          string   `jsonapi:"attr,total_discount"`
-	TotalInvoiceDiscount   string   `jsonapi:"attr,total_invoice_discount"`
-	BeforeTaxesTotal       string   `jsonapi:"attr,before_taxes_total"`
-	Remaining              string   `jsonapi:"attr,remaining"`
-	RemainingInTrl         string   `jsonapi:"attr,remaining_in_trl"`
-	PaymentStatus          string   `jsonapi:"attr,payment_status"`
-	ItemType               string   `jsonapi:"attr,item_type"`
-	Description            string   `jsonapi:"attr,description"`
-	IssueDate              string   `jsonapi:"attr,issue_date"`
-	DueDate                string   `jsonapi:"attr,due_date"`
-	InvoiceNo              string   `jsonapi:"attr,invoice_no"`
-	InvoiceSeries          string   `jsonapi:"attr,invoice_series"`
-	InvoiceID              string   `jsonapi:"attr,invoice_id"`
-	Currency               string   `jsonapi:"attr,currency"`
-	ExchangeRate           string   `jsonapi:"attr,exchange_rate"`
-	WithholdingRate        string   `jsonapi:"attr,withholding_rate"`
-	VatWitholdingRate      string   `jsonapi:"attr,vat_witholding_rate"`
-	InvoiceDiscountType    string   `jsonapi:"attr,invoice_discount_tyoe"`
-	InvoiceDiscount        string   `jsonapi:"attr,invoice_discount"`
-	BillingAddress         string   `jsonapi:"attr,billing_address"`
-	BillingPhone           string   `jsonapi:"attr,billing_phone"`
-	BillingFax             string   `jsonapi:"attr,billing_fax"`
-	TaxOffice              string   `jsonapi:"attr,tax_office"`
-	TaxNumber              string   `jsonapi:"attr,tax_number"`
-	City                   string   `jsonapi:"attr,city"`
-	District               string   `jsonapi:"attr,district"`
-	IsAbroad               bool     `jsonapi:"attr,is_abroad"`
-	OrderNo                string   `jsonapi:"attr,order_no"`
-	OrderDate              string   `jsonapi:"attr,order_date"`
-	ShipmentAddress        string   `jsonapi:"attr,shipment_address"`
-	ShipmentIncluded       bool     `jsonapi:"attr,shipment_included"`
-	Contact                *Contact `jsonapi:"relation,contact"`
-	SalesInvoiceDetails    []*SalesInvoiceDetails
+	ID                     string                 `jsonapi:"primary,sales_invoices"`
+	Archived               bool                   `jsonapi:"attr,archived"`
+	NetTotal               string                 `jsonapi:"attr,net_total"`
+	GrossTotal             string                 `jsonapi:"attr,gross_total"`
+	Withholding            string                 `jsonapi:"attr,withholding"`
+	TotalExciseDuty        string                 `jsonapi:"attr,total_excise_duty"`
+	TotalCommunicationsTax string                 `jsonapi:"attr,total_communications_tax"`
+	TotalVat               string                 `jsonapi:"attr,total_vat"`
+	VatWitholding          string                 `jsonapi:"attr,vat_witholding"`
+	TotalDiscount          string                 `jsonapi:"attr,total_discount"`
+	TotalInvoiceDiscount   string                 `jsonapi:"attr,total_invoice_discount"`
+	BeforeTaxesTotal       string                 `jsonapi:"attr,before_taxes_total"`
+	Remaining              string                 `jsonapi:"attr,remaining"`
+	RemainingInTrl         string                 `jsonapi:"attr,remaining_in_trl"`
+	PaymentStatus          string                 `jsonapi:"attr,payment_status"`
+	ItemType               string                 `jsonapi:"attr,item_type"`
+	Description            string                 `jsonapi:"attr,description"`
+	IssueDate              string                 `jsonapi:"attr,issue_date"`
+	DueDate                string                 `jsonapi:"attr,due_date"`
+	InvoiceNo              string                 `jsonapi:"attr,invoice_no"`
+	InvoiceSeries          string                 `jsonapi:"attr,invoice_series"`
+	InvoiceID              int64                  `jsonapi:"attr,invoice_id"`
+	Currency               string                 `jsonapi:"attr,currency"`
+	ExchangeRate           string                 `jsonapi:"attr,exchange_rate"`
+	WithholdingRate        string                 `jsonapi:"attr,withholding_rate"`
+	VatWitholdingRate      string                 `jsonapi:"attr,vat_witholding_rate"`
+	InvoiceDiscountType    string                 `jsonapi:"attr,invoice_discount_tyoe"`
+	InvoiceDiscount        string                 `jsonapi:"attr,invoice_discount"`
+	BillingAddress         string                 `jsonapi:"attr,billing_address"`
+	BillingPhone           string                 `jsonapi:"attr,billing_phone"`
+	BillingFax             string                 `jsonapi:"attr,billing_fax"`
+	TaxOffice              string                 `jsonapi:"attr,tax_office"`
+	TaxNumber              string                 `jsonapi:"attr,tax_number"`
+	City                   string                 `jsonapi:"attr,city"`
+	District               string                 `jsonapi:"attr,district"`
+	IsAbroad               bool                   `jsonapi:"attr,is_abroad"`
+	OrderNo                string                 `jsonapi:"attr,order_no"`
+	OrderDate              string                 `jsonapi:"attr,order_date"`
+	ShipmentAddress        string                 `jsonapi:"attr,shipment_address"`
+	ShipmentIncluded       bool                   `jsonapi:"attr,shipment_included"`
+	Contact                *Contact               `jsonapi:"relation,contact"`
+	SalesInvoiceDetails    []*SalesInvoiceDetails `jsonapi:"relation,details"`
 	ActiveEInvoice         *EInvoice
 	ActiveEArchive         *EArchive
 }
+
+type SalesInvoiceIndex []*SalesInvoice
+
+func (s SalesInvoiceIndex) Len() int           { return len(s) }
+func (s SalesInvoiceIndex) Less(i, j int) bool { return s[i].ID < s[j].ID }
+func (s SalesInvoiceIndex) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func (c *Client) SalesInvoice() *SalesInvoice {
 	return &SalesInvoice{
 		client: c,
 	}
+}
+
+func (sales_invoice *SalesInvoice) All(pageParams QueryParams, include ...string) ([]*SalesInvoice, error) {
+	header := req.Header{
+		"Authorization": "Bearer " + sales_invoice.client.AccessToken,
+	}
+
+	params := pageParams.GetParams(include...)
+	r, err := req.Get(sales_invoice.urlBuilder(), header, params)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = HandleHTTPStatus(r.Response())
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	// copy body
+	body := r.Response().Body
+	bodyBytes, _ := ioutil.ReadAll(body)
+	body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	var data []interface{}
+	data, err = jsonapi.UnmarshalManyPayload(body, reflect.TypeOf(sales_invoice))
+
+	if err != nil {
+		log.Println("unmarhal error: ", err)
+		return nil, err
+	}
+
+	result := make([]*SalesInvoice, len(data))
+
+	for i, val := range data {
+		result[i] = val.(*SalesInvoice)
+	}
+
+	sort.Sort(SalesInvoiceIndex(result))
+
+	// assign active e-invoice/archive
+	if strings.Contains(params["include"].(string), "active_e_document") {
+		// parse as regular json with jsonapi structs
+		var raw jsonapi.ManyPayload
+		json.Unmarshal(bodyBytes, &raw)
+
+		sort.Sort(NodeArray(raw.Data))
+		for index, data := range raw.Data {
+			// get type and id of active e-document
+			activeEDocumentRelation := data.Relationships["active_e_document"].(map[string]interface{})["data"]
+			if activeEDocumentRelation == nil {
+				continue
+			}
+
+			activeEDocumentType := activeEDocumentRelation.(map[string]interface{})["type"]
+			activeEDocumentID := activeEDocumentRelation.(map[string]interface{})["id"]
+
+			// loop for included entities, find active e-document
+			for _, val := range raw.Included {
+				if val.ID == activeEDocumentID && val.Type == activeEDocumentType {
+					bytearr, _ := json.Marshal(jsonapi.OnePayload{Data: val})
+					body = ioutil.NopCloser(bytes.NewBuffer(bytearr))
+					switch activeEDocumentType {
+					case "e_invoices":
+						result[index].ActiveEInvoice = new(EInvoice)
+						jsonapi.UnmarshalPayload(body, result[index].ActiveEInvoice)
+					case "e_archives":
+						result[index].ActiveEArchive = new(EArchive)
+						jsonapi.UnmarshalPayload(body, result[index].ActiveEArchive)
+					}
+					break
+				}
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (sales_invoice *SalesInvoice) Find(id string, include ...string) (*SalesInvoice, error) {

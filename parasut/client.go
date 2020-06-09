@@ -2,12 +2,14 @@ package parasut
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/jsonapi"
 	"github.com/imroc/req"
 )
 
@@ -22,6 +24,38 @@ type Client struct {
 	RefreshToken string
 	CompanyID    string
 	AutoRefresh  bool
+}
+
+type QueryParams struct {
+	Sort   string
+	Page   map[string]uint
+	Filter map[string]interface{}
+}
+
+type NodeArray []*jsonapi.Node
+
+func (s NodeArray) Len() int           { return len(s) }
+func (s NodeArray) Less(i, j int) bool { return s[i].ID < s[j].ID }
+func (s NodeArray) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+func (q *QueryParams) GetParams(include ...string) req.QueryParam {
+	params := req.QueryParam{
+		"include": strings.Join(include, ","),
+	}
+
+	for k, v := range q.Filter {
+		params[fmt.Sprintf("filter[%s]", k)] = v
+	}
+
+	for k, v := range q.Page {
+		params[fmt.Sprintf("page[%s]", k)] = v
+	}
+
+	if q.Sort != "" {
+		params["sort"] = q.Sort
+	}
+
+	return params
 }
 
 func (c *Client) Connect() error {

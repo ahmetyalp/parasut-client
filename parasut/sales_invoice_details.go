@@ -2,7 +2,7 @@ package parasut
 
 type SalesInvoiceDetails struct {
 	ID                    string   `jsonapi:"primary,sales_invoice_details"`
-	Quantity              string   `jsonapi:"attr,quantaty,omitempty"`
+	Quantity              string   `jsonapi:"attr,quantity,omitempty"`
 	UnitPrice             string   `jsonapi:"attr,unit_price,omitempty"`
 	VatRate               string   `jsonapi:"attr,vat_rate,omitempty"`
 	DiscountType          string   `jsonapi:"attr,discount_type,omitempty"`

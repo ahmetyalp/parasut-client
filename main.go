@@ -37,41 +37,52 @@ func main() {
 
 	// fmt.Printf("%#v\n", eInvoice)
 
-	// salesInvoice, _ := client.SalesInvoice().Find("513907", "active_e_document", "details", "contact")
+	// salesInvoice, _ := client.SalesInvoice().Find("585603")
 
 	// fmt.Printf("%#v\n", salesInvoice)
 	// fmt.Printf("%#v\n", salesInvoice.Contact)
 	// fmt.Printf("%#v\n", salesInvoice.ActiveEInvoice)
 	// fmt.Printf("%#v\n", salesInvoice.ActiveEArchive)
 	// fmt.Printf("%#v\n", len(salesInvoice.SalesInvoiceDetails))
-	// fmt.Printf("%#v\n", salesInvoice.SalesInvoiceDetails[0])
+	// fmt.Printf("%#v\n", salesInvoice.SalesInvoiceDetails[0].Product)
 
-	contact := parasut.Contact{
-		ID: "401080",
+	sales_invoces, _ := client.SalesInvoice().All(parasut.QueryParams{Page: map[string]uint{"number": 16}, Sort: "issue_date"}, "contact", "active_e_document")
+
+	fmt.Println(len(sales_invoces))
+	for _, val := range sales_invoces {
+		fmt.Printf("%#v\n", val.ID)
+		fmt.Printf("%#v\n", val.ActiveEArchive)
+		fmt.Printf("%#v\n", val.Contact)
 	}
 
-	product := parasut.Product{
-		ID: "548459",
-	}
+	// contact := parasut.Contact{
+	// 	ID: "401080",
+	// }
 
-	details := parasut.SalesInvoiceDetails{
-		Product:  &product,
-		Quantity: "6",
-	}
-	sales_invoice := parasut.SalesInvoice{
-		IssueDate:           "2020-01-01",
-		DueDate:             "2020-01-01",
-		Contact:             &contact,
-		WithholdingRate:     "0",
-		ItemType:            "invoice",
-		Currency:            "TRL",
-		ExchangeRate:        "1.0",
-		InvoiceDiscountType: "amount",
-		InvoiceDiscount:     "0",
-		SalesInvoiceDetails: []*parasut.SalesInvoiceDetails{&details},
-	}
+	// product := parasut.Product{
+	// 	ID: "548459",
+	// }
 
-	client.SalesInvoice().New(&sales_invoice)
+	// details := parasut.SalesInvoiceDetails{
+	// 	Product:  &product,
+	// 	Quantity: "6",
+	// }
+	// sales_invoice := parasut.SalesInvoice{
+	// 	IssueDate:           "2020-01-01",
+	// 	DueDate:             "2020-01-01",
+	// 	Contact:             &contact,
+	// 	WithholdingRate:     "0",
+	// 	ItemType:            "invoice",
+	// 	Currency:            "TRL",
+	// 	ExchangeRate:        "1.0",
+	// 	InvoiceDiscountType: "amount",
+	// 	InvoiceDiscount:     "0",
+	// 	SalesInvoiceDetails: []*parasut.SalesInvoiceDetails{&details},
+	// }
+
+	// si, _ := client.SalesInvoice().New(&sales_invoice)
+
+	// fmt.Printf("%#v\n", si)
 
 	// contact, _ := client.Contact().Find("1982805")
 

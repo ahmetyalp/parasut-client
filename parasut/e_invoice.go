@@ -94,9 +94,14 @@ func (e_invoice *EInvoice) Find(id string, include ...string) (*EInvoice, error)
 		var raw jsonapi.OnePayload
 		json.Unmarshal(bodyBytes, &raw)
 
+		invoiceRelation := raw.Data.Relationships["invoice"].(map[string]interface{})["data"]
+		if invoiceRelation == nil {
+			return result, nil
+		}
+
 		// get type and id of invoice
-		invoiceType := raw.Data.Relationships["invoice"].(map[string]interface{})["data"].(map[string]interface{})["type"]
-		invoiceID := raw.Data.Relationships["invoice"].(map[string]interface{})["data"].(map[string]interface{})["id"]
+		invoiceType := invoiceRelation.(map[string]interface{})["type"]
+		invoiceID := invoiceRelation.(map[string]interface{})["id"]
 
 		// loop for included entities, find invoice
 		for _, val := range raw.Included {
